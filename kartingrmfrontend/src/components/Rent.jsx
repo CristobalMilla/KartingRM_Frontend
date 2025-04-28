@@ -18,6 +18,7 @@ const Rent = () => {
   const [peopleAmount, setPeopleAmount] = useState(1);
   const [groupInputs, setGroupInputs] = useState([]);
   const [summary, setSummary] = useState(null);
+  
 
   // Fetch Fee Types
   useEffect(() => {
@@ -41,14 +42,18 @@ const Rent = () => {
   const nextStep = () => setStep((prevStep) => prevStep + 1);
   const prevStep = () => setStep((prevStep) => Math.max(prevStep - 1, 1));
 
-  // Fetch available slots based on selected date and fee type
-  //CAMBIAR A SERVICE
-  const fetchAvailableSlots = () => {
+  // Sacar slots de horario disponible
+  const fetchAvailableSlots = async () => {
+    console.log("Request data:", {
+        date: selectedDate,
+        totalDuration: selectedFeeType.totalDuration,
+      });
     try {
-        const response = rentService.getAvailableSlots({
+        const response = await rentService.getAvailableSlots({
             date: selectedDate,
             totalDuration: selectedFeeType.totalDuration,
         });
+        console.log("Available slots response:", response.data);
         setAvailableSlots(response.data);
     } catch (error) {
         console.error("Error fetching available slots:", error);
@@ -109,28 +114,45 @@ const Rent = () => {
     const endHours = Math.floor(endMinutes / 60);
     return `${String(endHours).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
   };
+  //Generar codigo de la reserva basado en la fecha y nombre principal
+  const generateCode = (date, mainName) => {
+    const formattedDate = new Date(date).toISOString().split('T')[0]; // Get the date in YYYY-MM-DD format
+    const namePart = mainName.replace(/\s+/g, '').toUpperCase(); // Remove spaces and make it uppercase for consistency
+    return `${formattedDate}-${namePart}`;
+  };
   //Guardar los datos ingresados y calculados en la renta final
   const saveRent = async () => {
+    
     try {
       const rentData = {
+        code: generateCode(selectedDate, mainName),
         mainName,
         mainRut,
         peopleAmount,
-        feeTypeId: selectedFeeType.id,
+        feeType: selectedFeeType,
         date: selectedDate,
-        startTime: selectedTime,
-        endTime: summary.endTime,
+        startTime: `${selectedTime}:00`,
+        endTime: `${summary.endTime}:00`,
         priceTotal: summary.totalPrice,
       };
-
-      const rentResponse = rentService.createComplete(rentData);
+      console.log(rentData);
+      const rentResponse = await rentService.createComplete(rentData);
 
       const receiptsData = summary.receipts.map((receipt) => ({
         ...receipt,
         rentId: rentResponse.data.id,
       }));
 
-      receiptService.create(receiptsData);
+
+    // Iterate over receiptsData and save each receipt individually
+    for (const receipt of summary.receipts) {
+        const receiptData = {
+          ...receipt,
+          rentId: rentResponse.data.id, // Attach the rentId to each receipt
+        };
+        await receiptService.create(receiptData); // Create each receipt
+      }
+  
 
       alert("Rent successfully saved");
     } catch (error) {
@@ -140,7 +162,7 @@ const Rent = () => {
   //HTML
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-2xl font-bold mb-4">New Rent</h1>
+      <h1 className="text-2xl font-bold mb-4">Nuevo Arriendo</h1>
 
       {step === 1 && (
         <div>

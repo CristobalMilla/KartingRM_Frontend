@@ -20,7 +20,7 @@ const createNoTotal = data => {
 }
 const getAvailableSlots = (data) => {
     return httpClient.post("/api/rent/availableSlots", data);
-};
+}
 const update = data => {
     return httpClient.put('/api/rent/', data);
 }
