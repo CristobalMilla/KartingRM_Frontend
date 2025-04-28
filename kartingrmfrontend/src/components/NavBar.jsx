@@ -16,12 +16,12 @@ const NavBar = () => {
           <Button color="inherit" component={Link} to="/karts">
             Karts
           </Button>
-          {/*<Button color="inherit" component={Link} to="/calendar">
+          <Button color="inherit" component={Link} to="/calendar">
             Calendario
           </Button>
-          <Button color="inherit" component={Link} to="/reservation">
+          <Button color="inherit" component={Link} to="/rent">
             Reservacion
-          </Button>*/}
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>
